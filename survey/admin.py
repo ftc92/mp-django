@@ -9,20 +9,27 @@ from .actions import make_published
 
 class QuestionInline(admin.TabularInline):
     model = Question
-    ordering = ("order", "category")
+    exclude = ['order', 'category', 'required', ]
+    ordering = ["category", ]
     extra = 1
 
 
 class CategoryInline(admin.TabularInline):
     model = Category
+    exclude = ['order', ]
     extra = 0
 
 
 class SurveyAdmin(admin.ModelAdmin):
-    list_display = ("name", "is_published", "need_logged_user", "template")
+    list_display = ("name", "is_published", "need_logged_user")
     list_filter = ("is_published", "need_logged_user")
-    inlines = [CategoryInline, QuestionInline]
+    inlines = [QuestionInline]
     actions = [make_published]
+
+    def get_form(self, request, obj=None, **kwargs):
+        self.exclude = ("template",)
+        form = super(SurveyAdmin, self).get_form(request, obj, **kwargs)
+        return form
 
 
 class AnswerBaseInline(admin.StackedInline):

@@ -35,3 +35,39 @@ class Survey(models.Model):
 
     def get_absolute_url(self):
         return reverse("survey-detail", kwargs={"id": self.pk})
+
+    @classmethod
+    def get_records(cls, request, params):
+        surveys = []
+        survey_obj = Survey.objects.filter(is_published=True)
+        for survey in survey_obj:
+            surveys.append({
+                'id': survey.id,
+                'name': survey.name,
+                'description': survey.description
+            })
+        surveys_json = {'records': surveys, 'total': 0, 'count': 0}
+        return surveys_json
+
+    @classmethod
+    def get_details(cls, request, params):
+        survey_id = params.get('survey_id')
+        if survey_id:
+            survey_obj = Survey.objects.filter(pk=survey_id)
+            survey = list(survey_obj)[0]
+            questions = survey.questions.all()
+            survey_questions = []
+            for question in questions:
+                question_dict = question.__dict__
+                if question_dict['_state']:
+                    del question_dict['_state']
+                if question_dict['choices']:
+                    question_dict['choices'] = question_dict['choices'].split(',')
+                survey_questions.append(question_dict)
+            survey = survey.__dict__
+            if survey['_state']:
+                del survey['_state']
+            survey['questions'] = survey_questions
+            return survey
+        else:
+            return 'Invalid Survey ID'
